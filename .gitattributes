@@ -1,3 +1,3 @@
 *.pbxproj -text
 
-linguist-language=JavaScript
+react-native-tutorial/* linguist-vendored=true
