@@ -9,9 +9,11 @@ import {
   Platform,
   StyleSheet,
   Text,
-  View, Button
+  View, Button,
+    ListView,
+    TouchableHighlight,
+    Alert
 } from 'react-native';
-import ComponenteTexto from './ComponenteTexto'
 
 const instructions = Platform.select({
   ios: 'Presiona Cmd+R  para recargar,\n' +
@@ -20,86 +22,67 @@ const instructions = Platform.select({
     'Agita o presiona el boton de menu for dev menu',
 });
 
-export class Loading extends Component {
-    render(){
-        return(
-            <Text>Loading...</Text>
-        )
-    }
-}
-
-export class ChildComponent extends Component{
-    render(){
-        if(this.props.result){
-          var rest = this.props.result.map((item, i) =>{
-                return(
-                    <Text key = {i}>{item.title}</Text>
-                )
-            })
-        }
-        return(
-            <View>
-                {this.props.result ? rest : <Loading/>}
-                <View style={this.props.status ? styles.on : styles.off}/>
-            </View>
-        )
-    }
-}
-
 type Props = {};
 export default class App extends Component<Props> {
   constructor(){
       super()
+
+      var ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 != r2})
       this.state = {
-          status: false,
-          data: null
+          dataSource: ds.cloneWithRows([])
       }
       }
       componentDidMount(){
+        var titles =[];
         fetch('https://facebook.github.io/react-native/movies.json')
             .then((response) => response.json())
             .then((responseJson) =>{
+                var movies = responseJson.movies;
+                for (var i = 0; i < movies.length; i++) {
+                    titles.push(movies[i].title);
+                }
                 this.setState({
-                    data: responseJson.movies
+                    dataSource: this.state.dataSource.cloneWithRows(titles)
                 })
             })
       }
-  clicked(){
-    this.setState({
-        status: !this.state.status
-    })
-  }
   render() {
     return (
       <View style={styles.container}>
-          <ChildComponent status={this.state.status} result = {this.state.data}/>
-          <Button
-              onPress={this.clicked.bind(this)}
-              title = 'Click Here'
-              color = 'red'
+          <ListView
+              enableEmptySections = {true}
+              dataSource = {this.state.dataSource}
+            renderRow = {this.renderRow}
           />
-        <ComponenteTexto/>
       </View>
     );
+  }
+  static pressCell(dataRow){
+    Alert.alert('Pelicula es: ', dataRow);
+  }
+  renderRow(dataRow){
+      return(
+      <TouchableHighlight onPress={() => App.pressCell(dataRow)}>
+          <View style={styles.cell}>
+              <Text>{dataRow}</Text>
+          </View>
+      </TouchableHighlight>
+      )
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: 'skyblue',
+      paddingTop: 30
   },
-    on:{
-      width: 100,
-        height: 100,
-        backgroundColor: 'yellow'
-    },
-    off:{
-        width:100,
-        height:100,
-        backgroundColor: 'black'
+    cell: {
+      borderBottomWidth:1,
+        borderBottomColor: 'grey',
+        paddingTop: 20,
+        paddingBottom: 20,
+        alignItems: 'center'
     },
   welcome: {
     fontSize: 20,
